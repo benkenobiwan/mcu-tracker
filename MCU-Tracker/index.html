@@ -55,6 +55,25 @@
             outline-offset: 1px;
         }
         .timeline-items { padding-left: 1.35rem; }
+        .search-control {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-shrink: 0;
+        }
+        .search-box-wrap {
+            max-width: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: max-width 0.25s ease, opacity 0.2s ease;
+        }
+        .search-box-wrap.open {
+            max-width: 14rem;
+            opacity: 1;
+        }
+        #timeline-search {
+            width: 13rem;
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-[#4A0404] to-[#120101] text-gray-100 min-h-screen font-sans antialiased bg-fixed">
@@ -86,15 +105,29 @@
             </div>
         </div>
 
-        <div class="bg-black/60 backdrop-blur-md rounded-xl p-4 shadow-2xl border border-gray-400/30 mb-6 relative overflow-hidden">
+        <div id="stats-panel" class="bg-black/60 backdrop-blur-md rounded-xl p-4 shadow-2xl border border-gray-400/30 mb-6 relative">
             <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-gray-300 to-transparent opacity-30"></div>
-            <div class="flex justify-between text-[10px] font-bold text-gray-300 mb-2 uppercase tracking-widest">
-                <div>Start: <button type="button" id="lbl-start-date" onclick="editStartDate()" class="text-white hover:text-[#E23636] underline decoration-dotted underline-offset-2 cursor-pointer" title="Click to change start date">May 4, 2026</button></div>
-                <div class="text-center text-[#E23636]">Today: <span id="lbl-current-date">--</span> | Watched: <span id="lbl-global-watched" class="text-white">0h 0m</span></div>
-                <div class="text-right">Projected Finish: <span id="lbl-finish-date" class="text-gray-100">--</span> (<span id="lbl-global-total">0h</span> target)</div>
-            </div>
-            <div class="w-full bg-[#1a0a0a] rounded-full h-2 overflow-hidden shadow-inner border border-gray-800">
-                <div id="bar-global-progress" class="bg-[#E23636] h-full rounded-full transition-all duration-700 shadow-[0_0_10px_#E23636]" style="width: 0%"></div>
+            <div class="flex items-start gap-3">
+                <div class="flex-1 min-w-0">
+                    <div class="flex justify-between text-[10px] font-bold text-gray-300 mb-2 uppercase tracking-widest">
+                        <div>Start: <button type="button" id="lbl-start-date" onclick="editStartDate()" class="text-white hover:text-[#E23636] underline decoration-dotted underline-offset-2 cursor-pointer" title="Click to change start date">May 4, 2026</button></div>
+                        <div class="text-center text-[#E23636]">Today: <span id="lbl-current-date">--</span> | Watched: <span id="lbl-global-watched" class="text-white">0h 0m</span></div>
+                        <div class="text-right">Projected Finish: <span id="lbl-finish-date" class="text-gray-100">--</span> (<span id="lbl-global-total">0h</span> target)</div>
+                    </div>
+                    <div class="w-full bg-[#1a0a0a] rounded-full h-2 overflow-hidden shadow-inner border border-gray-800">
+                        <div id="bar-global-progress" class="bg-[#E23636] h-full rounded-full transition-all duration-700 shadow-[0_0_10px_#E23636]" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="search-control pt-0.5">
+                    <div id="search-box-wrap" class="search-box-wrap">
+                        <input id="timeline-search" type="search" placeholder="Search timeline…" autocomplete="off"
+                            class="w-full bg-black/50 border border-gray-700 rounded px-2.5 py-1.5 text-xs text-gray-200 placeholder:text-gray-600 focus:outline-none focus:border-[#E23636]">
+                    </div>
+                    <button type="button" id="search-toggle" onclick="toggleSearch()" title="Search timeline"
+                        class="text-gray-500 hover:text-gray-200 transition p-1 rounded hover:bg-black/40 cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -182,6 +215,8 @@
         let highlightedDropEl = null;
         let activeDropSlot = null;
         const DRAG_EXPAND_MS = 1000;
+        let searchQuery = '';
+        let searchOpen = false;
 
         function setSyncStatus(text, tone = 'muted') {
             const el = document.getElementById('sync-status');
@@ -355,6 +390,7 @@
             determineDefaultExpansion();
             render();
             initDragDropListeners();
+            initSearchListeners();
             hideLoading();
         }
 
@@ -560,18 +596,117 @@
 
         function toggleGroup(key) { openGroups[key] = !openGroups[key]; render(); }
 
-        function getRenderableBlocks(items) {
+        function normalizeSearch(query) {
+            return query.trim().toLowerCase();
+        }
+
+        function matchesSearchText(text, query) {
+            return text && String(text).toLowerCase().includes(query);
+        }
+
+        function itemMatchesSearch(item, query) {
+            return matchesSearchText(item.title, query) ||
+                matchesSearchText(item.seriesTitle, query) ||
+                matchesSearchText(item.note, query);
+        }
+
+        function computeSearchFilter(query) {
+            const q = normalizeSearch(query);
+            if (!q) return null;
+
+            const structure = getStructuredData();
+            const visibleGroups = new Set();
+            const visibleSubgroups = new Set();
+            const visibleItemIds = new Set();
+
+            for (const gName in structure) {
+                if (matchesSearchText(gName, q)) {
+                    visibleGroups.add(gName);
+                    for (const sName in structure[gName].subgroups) {
+                        const sKey = `${gName}||${sName}`;
+                        visibleSubgroups.add(sKey);
+                        structure[gName].subgroups[sName].forEach(item => visibleItemIds.add(item.id));
+                    }
+                    continue;
+                }
+
+                for (const sName in structure[gName].subgroups) {
+                    const sKey = `${gName}||${sName}`;
+                    const items = structure[gName].subgroups[sName];
+
+                    if (matchesSearchText(sName, q)) {
+                        visibleGroups.add(gName);
+                        visibleSubgroups.add(sKey);
+                        items.forEach(item => visibleItemIds.add(item.id));
+                        continue;
+                    }
+
+                    items.forEach(item => {
+                        if (itemMatchesSearch(item, q)) {
+                            visibleGroups.add(gName);
+                            visibleSubgroups.add(sKey);
+                            visibleItemIds.add(item.id);
+                        }
+                    });
+                }
+            }
+
+            return { visibleGroups, visibleSubgroups, visibleItemIds };
+        }
+
+        function toggleSearch(forceOpen) {
+            searchOpen = typeof forceOpen === 'boolean' ? forceOpen : !searchOpen;
+            const wrap = document.getElementById('search-box-wrap');
+            const input = document.getElementById('timeline-search');
+            const toggle = document.getElementById('search-toggle');
+
+            wrap.classList.toggle('open', searchOpen);
+            toggle.classList.toggle('text-[#E23636]', searchOpen);
+            toggle.classList.toggle('text-gray-500', !searchOpen);
+
+            if (searchOpen) {
+                input.focus();
+            } else {
+                input.value = '';
+                searchQuery = '';
+                render();
+            }
+        }
+
+        function onSearchInput(value) {
+            searchQuery = value;
+            render();
+        }
+
+        function initSearchListeners() {
+            const input = document.getElementById('timeline-search');
+            if (!input || input.dataset.bound) return;
+            input.dataset.bound = '1';
+
+            input.addEventListener('input', (e) => onSearchInput(e.target.value));
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') toggleSearch(false);
+            });
+        }
+
+        function getRenderableBlocks(items, visibleItemIds = null) {
+            const sourceItems = visibleItemIds
+                ? items.filter(item => visibleItemIds.has(item.id))
+                : items;
+
             const blocks = [];
             const processedSeries = new Set();
-            items.forEach(item => {
+            sourceItems.forEach(item => {
                 if (!item.isSeries) {
                     blocks.push({ type: 'item', item, beforeId: item.id });
                 } else {
                     const seriesKey = `${item.seriesTitle}||${item.seasonNumber}`;
                     if (!processedSeries.has(seriesKey)) {
                         processedSeries.add(seriesKey);
-                        const episodes = items.filter(i => i.isSeries && i.seriesTitle === item.seriesTitle && i.seasonNumber === item.seasonNumber);
-                        blocks.push({ type: 'series', episodes, beforeId: episodes[0].id });
+                        const episodes = sourceItems.filter(i => i.isSeries && i.seriesTitle === item.seriesTitle && i.seasonNumber === item.seasonNumber);
+                        if (episodes.length) {
+                            blocks.push({ type: 'series', episodes, beforeId: episodes[0].id });
+                        }
                     }
                 }
             });
@@ -826,18 +961,25 @@
             container.innerHTML = '';
 
             const structure = getStructuredData();
+            const searchFilter = computeSearchFilter(searchQuery);
+            let renderedAny = false;
 
             for (let gName in structure) {
-                let gWatched = 0, gTotal = 0;
-                let isGComplete = structure[gName].allItems.length > 0 && structure[gName].allItems.every(i => i.status !== 'unwatched');
+                if (searchFilter && !searchFilter.visibleGroups.has(gName)) continue;
 
-                structure[gName].allItems.forEach(i => {
+                let gWatched = 0, gTotal = 0;
+                const groupItems = searchFilter
+                    ? structure[gName].allItems.filter(i => searchFilter.visibleItemIds.has(i.id))
+                    : structure[gName].allItems;
+                let isGComplete = groupItems.length > 0 && groupItems.every(i => i.status !== 'unwatched');
+
+                groupItems.forEach(i => {
                     if (i.status === 'watched') { gWatched += i.runtime; gTotal += i.runtime; }
                     else if (i.status === 'unwatched') { gTotal += i.runtime; }
                 });
 
                 const gKey = gName;
-                const isGOpen = !!openGroups[gKey];
+                const isGOpen = searchFilter ? true : !!openGroups[gKey];
                 
                 const gHeaderStyle = isGComplete ? "bg-[#E23636]/20 border border-[#E23636]/40" : "bg-[#111]/90 border border-gray-600/40";
 
@@ -860,10 +1002,19 @@
                 `;
 
                 const subContainer = gDiv.querySelector('.collapsible-content > div');
+                let groupHasSections = false;
 
                 for (let sName in structure[gName].subgroups) {
+                    const sKey = `${gName}||${sName}`;
+                    if (searchFilter && !searchFilter.visibleSubgroups.has(sKey)) continue;
+
                     let sWatched = 0, sTotal = 0;
-                    const items = structure[gName].subgroups[sName];
+                    const allSectionItems = structure[gName].subgroups[sName];
+                    const items = searchFilter
+                        ? allSectionItems.filter(i => searchFilter.visibleItemIds.has(i.id))
+                        : allSectionItems;
+                    if (!items.length) continue;
+
                     let isSComplete = items.length > 0 && items.every(i => i.status !== 'unwatched');
 
                     items.forEach(i => {
@@ -871,8 +1022,7 @@
                         else if (i.status === 'unwatched') { sTotal += i.runtime; }
                     });
 
-                    const sKey = `${gName}||${sName}`;
-                    const isSOpen = !!openGroups[sKey];
+                    const isSOpen = searchFilter ? true : !!openGroups[sKey];
 
                     const sHeaderStyle = isSComplete ? "bg-[#E23636]/20 border border-[#E23636]/40 text-white" : "bg-[#161616] border border-gray-700/50 text-gray-300";
 
@@ -893,9 +1043,13 @@
                     `;
 
                     const itemContainer = sDiv.querySelector('.collapsible-content > div');
-                    const blocks = getRenderableBlocks(items);
+                    const blocks = getRenderableBlocks(allSectionItems, searchFilter ? searchFilter.visibleItemIds : null);
 
                     blocks.forEach((block) => {
+                        if (searchFilter && block.type === 'series') {
+                            openGroups[`series||${block.episodes[0].seriesTitle}||${block.episodes[0].seasonNumber}`] = true;
+                        }
+
                         itemContainer.appendChild(createDropSlot(gName, sName, block.beforeId));
                         if (block.type === 'item') {
                             itemContainer.appendChild(wrapDraggable(renderItemRow(block.item), { ids: [block.item.id] }));
@@ -909,8 +1063,17 @@
                     itemContainer.appendChild(createDropSlot(gName, sName, null));
 
                     subContainer.appendChild(sDiv);
+                    groupHasSections = true;
                 }
-                container.appendChild(gDiv);
+
+                if (groupHasSections) {
+                    container.appendChild(gDiv);
+                    renderedAny = true;
+                }
+            }
+
+            if (searchFilter && !renderedAny) {
+                container.innerHTML = '<p class="text-sm text-gray-500 text-center py-10 uppercase tracking-widest">No matches found</p>';
             }
         }
 
