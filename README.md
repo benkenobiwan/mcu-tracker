@@ -49,19 +49,27 @@ Or open `MCU-Tracker/harvest.html` locally and click **Copy export script** — 
 3. Open **SQL Editor** → **New query**.
 4. Paste the contents of `supabase/migrations/001_tracker_app_state.sql` and run it.
 
-### 3. Configure the app
+### 3. Configure Supabase credentials
 
-1. In Supabase: **Project Settings → API**.
-2. Copy **Project URL** and **anon/public key** (legacy anon key or new publishable key both work).
-3. In this repo:
+**Netlify (recommended for deploy):**
 
-```bash
-cp MCU-Tracker/config.example.js MCU-Tracker/config.js
-```
+1. In Supabase: **Project Settings → API** → copy **Project URL** and **anon/public key**.
+2. In Netlify: **Site configuration → Environment variables** → add:
 
-4. Edit `MCU-Tracker/config.js` with your URL and key.
+| Variable | Value |
+|----------|--------|
+| `SUPABASE_URL` | `https://YOUR_PROJECT_REF.supabase.co` |
+| `SUPABASE_ANON_KEY` | your anon/publishable key |
 
-**Do not commit `config.js`** — it's gitignored.
+3. Deploy — the build generates `config.js` from those variables automatically.
+
+**Local dev** (pick one):
+
+- Keep your existing `MCU-Tracker/config.js`, or
+- Copy `.env.example` → `.env`, fill in values, then run `npm run dev`
+
+**Do not commit `config.js` or `.env`** — both are gitignored.
+
 
 ### 4. Import your harvested state
 
@@ -81,15 +89,22 @@ This only works if the new tracker is on the **same URL** as the old one (same l
 - **Export backup** downloads `{ startDate, items }` JSON anytime.
 - **Import state.json** accepts either the old array format or the new `{ startDate, items }` format.
 
-## Hosting (optional)
+## Hosting on Netlify
 
-Static files only — no backend needed beyond Supabase.
+Connect the GitHub repo in Netlify. Settings are already in `netlify.toml`:
 
-- GitHub Pages: push repo, enable Pages on `/MCU-Tracker` or root.
-- Or open locally with any static server:
+| Setting | Value |
+|---------|--------|
+| **Build command** | `npm run build` |
+| **Publish directory** | `MCU-Tracker` |
+| **Run command** | *(none — static site)* |
+
+Add environment variables in the Netlify UI (see step 3 above), then deploy.
+
+Local preview with the same build step:
 
 ```bash
-npx serve MCU-Tracker
+npm run dev
 ```
 
 ## Security note
@@ -102,6 +117,9 @@ This is a personal app: the anon key lives in `config.js` in your static site. T
 |------|---------|
 | `index.html` | Main tracker (Supabase + localStorage cache) |
 | `harvest.html` | One-time export from old localStorage |
-| `config.example.js` | Template for Supabase credentials |
+| `config.example.js` | Local manual config template |
+| `.env.example` | Local env template for `npm run build` |
+| `netlify.toml` | Netlify build + publish settings |
+| `scripts/generate-config.js` | Writes `config.js` from env vars at build time |
 | `localstorage.json` | Initial timeline catalog (no progress) |
 | `supabase/migrations/001_tracker_app_state.sql` | Database schema |

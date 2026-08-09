@@ -1,2 +1,3 @@
 MCU-Tracker/config.js
+.env
 *.local

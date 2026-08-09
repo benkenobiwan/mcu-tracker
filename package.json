@@ -1,0 +1,8 @@
+{
+  "name": "mcu-tracker",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/generate-config.js",
+    "dev": "npm run build && npx serve MCU-Tracker"
+  }
+}
