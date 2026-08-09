@@ -8,22 +8,39 @@ Personal Marvel timeline tracker with cloud sync via Supabase.
 
 Your `localstorage.json` in this repo is the **initial catalog only** — it does not include your watched/skipped progress.
 
-1. Open the **old tracker** in the browser where you've been checking things off (same browser/profile).
-2. Open `MCU-Tracker/harvest.html` in that same browser (double-click or serve locally).
-3. Click **Download my-state.json** — this captures `mcu_timeline_state` from localStorage plus your start date.
+**If you used the Netlify tracker** ([mcu-narrative-watch-order.netlify.app](https://mcu-narrative-watch-order.netlify.app/)) — this is the usual case — localStorage lives on that domain only. A local `harvest.html` file **cannot** see it.
 
-Keep that file safe until step 4.
-
-**If harvest shows no data** (common with `file://` URLs), open your old tracker, press F12 → Console, paste:
+1. Open [mcu-narrative-watch-order.netlify.app](https://mcu-narrative-watch-order.netlify.app/) in the browser where you've been checking things off.
+2. Press **F12** → **Console**.
+3. Paste this script and press Enter:
 
 ```javascript
-copy(JSON.stringify({
-  startDate: '2026-05-04',
-  items: JSON.parse(localStorage.getItem('mcu_timeline_state') || '[]')
-}, null, 2))
+(function () {
+  var raw = localStorage.getItem('mcu_timeline_state');
+  if (!raw || raw === '[]') { alert('No timeline data found.'); return; }
+  var items = JSON.parse(raw);
+  var payload = {
+    startDate: localStorage.getItem('mcu_start_date') || '2026-05-04',
+    items: items,
+    exportedAt: new Date().toISOString(),
+    source: location.hostname
+  };
+  var watched = items.filter(function (i) { return i.status === 'watched'; }).length;
+  var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'my-state.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  alert('Downloaded my-state.json\n' + items.length + ' items · ' + watched + ' watched');
+})();
 ```
 
-Paste into a new file named `my-state.json`.
+4. Save the downloaded `my-state.json`.
+
+Or open `MCU-Tracker/harvest.html` locally and click **Copy export script** — same script, with instructions.
+
+**If you used a local copy of the tracker** on the same machine, open `harvest.html` from that same origin (or use the console script on that page).
 
 ### 2. Create Supabase project
 
@@ -56,12 +73,7 @@ You should see **Synced** in the header. Click the start date to change it anyti
 
 ## Alternative: migrate without a file
 
-If you open the new tracker in the **same browser** that still has localStorage data:
-
-1. Set up Supabase + `config.js` first.
-2. Open `index.html`.
-3. A **Migrate local progress?** prompt appears when cloud is empty but localStorage has watched/skipped items.
-4. Click **Upload to Supabase**.
+This only works if the new tracker is on the **same URL** as the old one (same localStorage origin). If you're moving from Netlify to a new deploy, use the console export above instead.
 
 ## Daily use
 

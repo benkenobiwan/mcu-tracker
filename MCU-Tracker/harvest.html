@@ -3,34 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MCU Tracker — Harvest localStorage</title>
+    <title>MCU Tracker — Harvest progress</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
 <body class="bg-[#120101] text-gray-100 min-h-screen font-sans antialiased p-8">
-    <div class="max-w-xl mx-auto space-y-6">
+    <div class="max-w-2xl mx-auto space-y-6">
         <div>
             <h1 class="text-2xl font-bold text-white">Harvest your live progress</h1>
             <p class="text-sm text-gray-400 mt-2">
-                Open this page in the <strong>same browser</strong> where you've been using the old tracker
-                (the one that still has your watched/skipped checkmarks in localStorage).
+                Browser storage is tied to the <strong>site URL</strong>, not your computer.
+                If you've been using the hosted tracker, you must export <em>from that site</em> — not from a local file.
             </p>
         </div>
 
-        <div id="status-panel" class="bg-black/60 border border-gray-700 rounded-xl p-5 space-y-3">
-            <div class="text-xs uppercase tracking-widest text-gray-500 font-bold">Status</div>
-            <div id="status-text" class="text-sm text-gray-300">Checking localStorage…</div>
-            <div id="stats" class="text-xs text-gray-500 font-mono hidden"></div>
+        <!-- Shown when this page can't see your data (wrong origin) -->
+        <div id="netlify-panel" class="hidden bg-[#E23636]/10 border border-[#E23636]/40 rounded-xl p-5 space-y-4">
+            <div>
+                <p class="text-sm font-bold text-white uppercase tracking-wider">Hosted tracker (your case)</p>
+                <p class="text-sm text-gray-300 mt-2">
+                    Your progress lives on
+                    <a href="https://mcu-narrative-watch-order.netlify.app/" class="text-[#E23636] underline" target="_blank" rel="noopener">mcu-narrative-watch-order.netlify.app</a>.
+                    This page is on a different origin, so it cannot read that data.
+                </p>
+            </div>
+            <ol class="list-decimal list-inside text-sm text-gray-400 space-y-2">
+                <li>Open the <a href="https://mcu-narrative-watch-order.netlify.app/" class="text-gray-200 underline" target="_blank" rel="noopener">Netlify tracker</a> (same browser/profile you've been using).</li>
+                <li>Press <kbd class="px-1.5 py-0.5 rounded bg-black/60 border border-gray-700 text-gray-300 text-xs">F12</kbd> → <strong>Console</strong>.</li>
+                <li>Click <strong>Copy export script</strong> below, paste into the console, press Enter.</li>
+                <li>It downloads <code class="text-gray-300">my-state.json</code> with all watched/skipped status.</li>
+            </ol>
+            <button id="btn-copy-script"
+                class="bg-[#E23636] hover:bg-red-700 text-white px-4 py-2 rounded font-bold uppercase text-xs tracking-wider cursor-pointer">
+                Copy export script
+            </button>
+            <p id="copy-script-feedback" class="text-xs text-green-500 hidden">Copied — paste in the Netlify site's console.</p>
         </div>
 
-        <div class="flex flex-wrap gap-3">
-            <button id="btn-download" disabled
-                class="bg-[#E23636] hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed text-white px-4 py-2 rounded font-bold uppercase text-xs tracking-wider cursor-pointer">
-                Download my-state.json
-            </button>
-            <button id="btn-copy" disabled
-                class="bg-gray-800 hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed text-gray-200 px-4 py-2 rounded font-bold uppercase text-xs tracking-wider cursor-pointer">
-                Copy JSON
-            </button>
+        <!-- Shown when same-origin data exists (e.g. harvest.html deployed beside the tracker) -->
+        <div id="local-panel" class="hidden space-y-4">
+            <div id="status-panel" class="bg-black/60 border border-gray-700 rounded-xl p-5 space-y-3">
+                <div class="text-xs uppercase tracking-widest text-gray-500 font-bold">Status</div>
+                <div id="status-text" class="text-sm text-gray-300">Checking localStorage…</div>
+                <div id="stats" class="text-xs text-gray-500 font-mono hidden"></div>
+            </div>
+
+            <div class="flex flex-wrap gap-3">
+                <button id="btn-download" disabled
+                    class="bg-[#E23636] hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed text-white px-4 py-2 rounded font-bold uppercase text-xs tracking-wider cursor-pointer">
+                    Download my-state.json
+                </button>
+                <button id="btn-copy" disabled
+                    class="bg-gray-800 hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed text-gray-200 px-4 py-2 rounded font-bold uppercase text-xs tracking-wider cursor-pointer">
+                    Copy JSON
+                </button>
+            </div>
         </div>
 
         <div class="bg-black/40 border border-gray-800 rounded-xl p-5 text-sm text-gray-400 space-y-2">
@@ -39,19 +65,44 @@
                 <li>Save <code class="text-gray-300">my-state.json</code> somewhere safe.</li>
                 <li>Set up Supabase and run the SQL migration (see README).</li>
                 <li>Copy <code class="text-gray-300">config.example.js</code> → <code class="text-gray-300">config.js</code> with your keys.</li>
-                <li>Open the main tracker and use <strong>Import state.json</strong> — it accepts this file format.</li>
+                <li>Open the new tracker and use <strong>Import state.json</strong>.</li>
             </ol>
         </div>
 
-        <p class="text-xs text-gray-600">
-            No data leaves your browser until you download or copy it. This page does not connect to Supabase.
-        </p>
+        <details class="text-xs text-gray-600">
+            <summary class="cursor-pointer text-gray-500 hover:text-gray-400">Why can't a local harvest page see Netlify data?</summary>
+            <p class="mt-2">localStorage is scoped per origin (protocol + host + port). Data saved at <code>https://mcu-narrative-watch-order.netlify.app</code> is invisible to <code>file://</code> or any other domain. Export must run on the same URL where you used the app.</p>
+        </details>
     </div>
 
     <script>
         const STORAGE_KEY = 'mcu_timeline_state';
         const START_KEY = 'mcu_start_date';
         const DEFAULT_START = '2026-05-04';
+        const LEGACY_NETLIFY_HOST = 'mcu-narrative-watch-order.netlify.app';
+
+        const EXPORT_SCRIPT = `(function () {
+  var raw = localStorage.getItem('${STORAGE_KEY}');
+  if (!raw || raw === '[]') {
+    alert('No timeline data found. Are you on the tracker page in the same browser you have been using?');
+    return;
+  }
+  var items = JSON.parse(raw);
+  var payload = {
+    startDate: localStorage.getItem('${START_KEY}') || '${DEFAULT_START}',
+    items: items,
+    exportedAt: new Date().toISOString(),
+    source: location.hostname
+  };
+  var watched = items.filter(function (i) { return i.status === 'watched'; }).length;
+  var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'my-state.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  alert('Downloaded my-state.json\\n' + items.length + ' items · ' + watched + ' watched');
+})();`;
 
         let exportPayload = null;
 
@@ -75,17 +126,25 @@
 
             if (!Array.isArray(items) || items.length === 0) return null;
 
-            const startDate = localStorage.getItem(START_KEY) || DEFAULT_START;
-
             return {
-                startDate,
+                startDate: localStorage.getItem(START_KEY) || DEFAULT_START,
                 items,
                 exportedAt: new Date().toISOString(),
-                source: 'localStorage'
+                source: location.hostname
             };
         }
 
-        function refresh() {
+        function downloadPayload(payload) {
+            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'my-state.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function refreshLocalPanel() {
             const statusEl = document.getElementById('status-text');
             const statsEl = document.getElementById('stats');
             const btnDownload = document.getElementById('btn-download');
@@ -94,44 +153,62 @@
             exportPayload = buildExport();
 
             if (!exportPayload) {
-                statusEl.innerHTML = 'No timeline data found in this browser under <code class="text-gray-300">mcu_timeline_state</code>. Open the old tracker here first, or paste your backup JSON via the main app\'s import.';
+                statusEl.innerHTML = 'No data on <code class="text-gray-300">' + location.hostname + '</code> under <code class="text-gray-300">mcu_timeline_state</code>.';
                 statsEl.classList.add('hidden');
                 btnDownload.disabled = true;
                 btnCopy.disabled = true;
-                return;
+                return false;
             }
 
             const counts = countStatuses(exportPayload.items);
-            const watched = counts.watched || 0;
-            const skipped = counts.skipped || 0;
-            const skippedRewatch = counts.skipped_rewatch || 0;
-            const unwatched = counts.unwatched || 0;
-
-            statusEl.textContent = `Found ${exportPayload.items.length} items with your progress intact.`;
-            statsEl.textContent = `Start: ${exportPayload.startDate} · watched: ${watched} · skipped: ${skipped} · skip rewatch: ${skippedRewatch} · unwatched: ${unwatched}`;
+            statusEl.textContent = 'Found ' + exportPayload.items.length + ' items with your progress intact.';
+            statsEl.textContent = 'Start: ' + exportPayload.startDate +
+                ' · watched: ' + (counts.watched || 0) +
+                ' · skipped: ' + (counts.skipped || 0) +
+                ' · skip rewatch: ' + (counts.skipped_rewatch || 0) +
+                ' · unwatched: ' + (counts.unwatched || 0);
             statsEl.classList.remove('hidden');
             btnDownload.disabled = false;
             btnCopy.disabled = false;
+            return true;
         }
 
-        document.getElementById('btn-download').addEventListener('click', () => {
-            if (!exportPayload) return;
-            const blob = new Blob([JSON.stringify(exportPayload, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'my-state.json';
-            a.click();
-            URL.revokeObjectURL(url);
-        });
+        function init() {
+            const onLegacyNetlify = location.hostname === LEGACY_NETLIFY_HOST;
+            const hasLocalData = !!buildExport();
 
-        document.getElementById('btn-copy').addEventListener('click', async () => {
-            if (!exportPayload) return;
-            await navigator.clipboard.writeText(JSON.stringify(exportPayload, null, 2));
-            alert('Copied full state JSON to clipboard.');
-        });
+            document.getElementById('btn-copy-script').addEventListener('click', async () => {
+                await navigator.clipboard.writeText(EXPORT_SCRIPT);
+                const feedback = document.getElementById('copy-script-feedback');
+                feedback.classList.remove('hidden');
+                setTimeout(() => feedback.classList.add('hidden'), 4000);
+            });
 
-        refresh();
+            if (onLegacyNetlify || hasLocalData) {
+                document.getElementById('local-panel').classList.remove('hidden');
+                const ok = refreshLocalPanel();
+
+                if (onLegacyNetlify && ok) {
+                    document.getElementById('status-text').textContent =
+                        'On the hosted tracker — use the buttons below or stay on this tab after deploying harvest.html here.';
+                }
+
+                document.getElementById('btn-download').addEventListener('click', () => {
+                    if (exportPayload) downloadPayload(exportPayload);
+                });
+                document.getElementById('btn-copy').addEventListener('click', async () => {
+                    if (!exportPayload) return;
+                    await navigator.clipboard.writeText(JSON.stringify(exportPayload, null, 2));
+                    alert('Copied full state JSON to clipboard.');
+                });
+            }
+
+            if (!onLegacyNetlify && !hasLocalData) {
+                document.getElementById('netlify-panel').classList.remove('hidden');
+            }
+        }
+
+        init();
     </script>
 </body>
 </html>
