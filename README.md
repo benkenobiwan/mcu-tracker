@@ -101,6 +101,44 @@ Connect the GitHub repo in Netlify. Settings are already in `netlify.toml`:
 
 Add environment variables in the Netlify UI (see step 3 above), then deploy.
 
+## Shared navbar (multi-app)
+
+Navigation links and the navbar UI (including the edit popup) are stored in Supabase so every Netlify app can share the same menu.
+
+1. Run `supabase/migrations/002_navbar_settings.sql` in the SQL editor (seeds MCU + Example links).
+2. Push the component source to Supabase once:
+
+```bash
+npm run sync-navbar
+```
+
+3. Each app needs:
+   - `<div id="shared-navbar-mount"></div>` at the top of the body
+   - `navbar-bootstrap.js` (copy from this repo)
+   - `config.js` with `SUPABASE_URL` and `SUPABASE_ANON_KEY` only
+   - `window.initSharedNavbar()` defined **in the app's HTML/JS before bootstrap** — see the header comment in `shared/navbar-component.js` for `colors` and `style` Tailwind classes
+
+**Per-app customization:** set `colors` (required) and optional `style` in `initSharedNavbar()` in each app's source. Do not put colors in config or Supabase. Edit link labels/URLs with the pencil icon (saves to Supabase for all apps).
+
+**New app checklist:**
+
+```html
+<div id="shared-navbar-mount"></div>
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  window.initSharedNavbar = function ({ supabase, links, mount }) {
+    SharedNavbar.init({
+      supabase, links, mount,
+      colors: { link: 'text-gray-400', hover: 'hover:text-gray-200', active: 'text-white' }
+    });
+  };
+</script>
+<script src="navbar-bootstrap.js"></script>
+```
+
+After editing `shared/navbar-component.js`, run `npm run sync-navbar` to update all apps on next load.
+
 Local preview with the same build step:
 
 ```bash
@@ -121,5 +159,8 @@ This is a personal app: the anon key lives in `config.js` in your static site. T
 | `.env.example` | Local env template for `npm run build` |
 | `netlify.toml` | Netlify build + publish settings |
 | `scripts/generate-config.js` | Writes `config.js` from env vars at build time |
+| `shared/navbar-component.js` | Shared navbar source (synced to Supabase) |
+| `MCU-Tracker/navbar-bootstrap.js` | Loader copied into each app |
+| `supabase/migrations/002_navbar_settings.sql` | Shared navbar links + component storage |
 | `localstorage.json` | Initial timeline catalog (no progress) |
 | `supabase/migrations/001_tracker_app_state.sql` | Database schema |

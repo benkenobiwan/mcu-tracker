@@ -37,4 +37,10 @@ window.SUPABASE_ANON_KEY = ${JSON.stringify(key)};
 `;
 
 fs.writeFileSync(outputPath, contents, 'utf8');
+
+const sharedNavbarSrc = path.join(__dirname, '..', 'shared', 'navbar-component.js');
+const sharedNavbarDest = path.join(__dirname, '..', 'MCU-Tracker', 'navbar-component.js');
+fs.copyFileSync(sharedNavbarSrc, sharedNavbarDest);
+
 console.log('Generated MCU-Tracker/config.js');
+console.log('Copied shared/navbar-component.js to MCU-Tracker/');

@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "build": "node scripts/generate-config.js",
+    "sync-navbar": "node scripts/sync-navbar-component.js",
     "dev": "npm run build && npx serve MCU-Tracker"
   }
 }
