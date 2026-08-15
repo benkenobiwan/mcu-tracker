@@ -96,6 +96,41 @@
         #timeline-search {
             width: 13rem;
         }
+        .combo-dropdown {
+            display: none;
+        }
+        .combo-dropdown.open {
+            display: block;
+        }
+        .combo-option {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 0.375rem 0.5rem;
+            font-size: 0.75rem;
+            color: #e5e7eb;
+            cursor: pointer;
+        }
+        .combo-option:hover,
+        .combo-option:focus {
+            background: rgba(226, 54, 54, 0.15);
+            outline: none;
+        }
+        .tmdb-result {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            width: 100%;
+            text-align: left;
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+        .tmdb-result:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(107, 114, 128, 0.4);
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-[#4A0404] to-[#120101] text-gray-100 min-h-screen font-sans antialiased bg-fixed">
@@ -179,12 +214,29 @@
     </div>
 
     <div id="add-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
-        <div class="bg-[#1a0a0a] rounded-xl border border-gray-500/40 max-w-md w-full p-6 shadow-2xl relative">
+        <div class="bg-[#1a0a0a] rounded-xl border border-gray-500/40 max-w-lg w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
             <div class="absolute top-0 left-0 w-full h-1 bg-[#E23636]"></div>
             <h3 class="text-xl font-bold mb-4 text-gray-100 uppercase tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-gray-200 to-gray-500">Add New Timeline Item</h3>
             <form id="item-form" onsubmit="saveCustomItem(event)" class="space-y-4">
-                <div><label class="block text-xs font-bold text-gray-400 uppercase mb-1">Major Group</label><input type="text" id="form-group" required class="w-full bg-black/50 border border-gray-700 rounded p-2 text-sm text-gray-200 focus:outline-none focus:border-[#E23636]"></div>
-                <div><label class="block text-xs font-bold text-gray-400 uppercase mb-1">Sub Group</label><input type="text" id="form-subgroup" required class="w-full bg-black/50 border border-gray-700 rounded p-2 text-sm text-gray-200 focus:outline-none focus:border-[#E23636]"></div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Search TMDB</label>
+                    <input type="search" id="tmdb-search" autocomplete="off" placeholder="Search movies &amp; TV shows…"
+                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-sm text-gray-200 focus:outline-none focus:border-[#E23636]">
+                    <p id="tmdb-status" class="text-[10px] text-gray-600 mt-1">Auto-fills title, year, and runtime. Pick group/subgroup below.</p>
+                    <div id="tmdb-results" class="hidden mt-2 max-h-44 overflow-y-auto rounded border border-gray-800 bg-black/40 p-1 space-y-1"></div>
+                </div>
+                <div class="relative">
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Major Group</label>
+                    <input type="text" id="form-group" required autocomplete="off"
+                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-sm text-gray-200 focus:outline-none focus:border-[#E23636]">
+                    <div id="form-group-list" class="combo-dropdown absolute z-20 left-0 right-0 mt-1 max-h-40 overflow-y-auto rounded border border-gray-700 bg-[#1a0a0a] shadow-xl"></div>
+                </div>
+                <div class="relative">
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Sub Group</label>
+                    <input type="text" id="form-subgroup" required autocomplete="off"
+                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-sm text-gray-200 focus:outline-none focus:border-[#E23636]">
+                    <div id="form-subgroup-list" class="combo-dropdown absolute z-20 left-0 right-0 mt-1 max-h-40 overflow-y-auto rounded border border-gray-700 bg-[#1a0a0a] shadow-xl"></div>
+                </div>
                 <div>
                     <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Item Type</label>
                     <select id="form-is-series" onchange="toggleFormSeriesFields()" class="w-full bg-black/50 border border-gray-700 rounded p-2 text-sm text-gray-200 focus:outline-none focus:border-[#E23636]">
@@ -415,6 +467,7 @@
             render();
             initDragDropListeners();
             initSearchListeners();
+            initAddItemForm();
             hideLoading();
         }
 
@@ -1227,8 +1280,233 @@
         }
 
         // Add Modal logic mapping
-        function openModal() { document.getElementById('add-modal').classList.remove('hidden'); }
-        function closeModal() { document.getElementById('add-modal').classList.add('hidden'); document.getElementById('item-form').reset(); toggleFormSeriesFields(); }
+        let tmdbSearchTimer = null;
+
+        function getExistingGroups() {
+            const groups = new Set();
+            state.forEach(item => { if (item.group) groups.add(item.group); });
+            return [...groups].sort((a, b) => a.localeCompare(b));
+        }
+
+        function getExistingSubgroups(groupName) {
+            const subgroups = new Set();
+            state.forEach(item => {
+                if (!item.subgroup) return;
+                if (!groupName || item.group === groupName) subgroups.add(item.subgroup);
+            });
+            return [...subgroups].sort((a, b) => a.localeCompare(b));
+        }
+
+        function setupCombobox(inputId, listId, getOptions) {
+            const input = document.getElementById(inputId);
+            const list = document.getElementById(listId);
+            if (!input || !list || input.dataset.comboBound) return;
+            input.dataset.comboBound = '1';
+
+            function renderOptions() {
+                const query = input.value.trim().toLowerCase();
+                const options = getOptions().filter(opt =>
+                    !query || opt.toLowerCase().includes(query)
+                );
+
+                if (!options.length) {
+                    list.classList.remove('open');
+                    list.innerHTML = '';
+                    return;
+                }
+
+                list.innerHTML = options.map(opt =>
+                    `<button type="button" class="combo-option" data-value="${opt.replace(/"/g, '&quot;')}">${opt.replace(/</g, '&lt;')}</button>`
+                ).join('');
+                list.classList.add('open');
+
+                list.querySelectorAll('.combo-option').forEach(btn => {
+                    btn.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        input.value = btn.dataset.value;
+                        list.classList.remove('open');
+                        if (inputId === 'form-group') {
+                            document.getElementById('form-subgroup')?.focus();
+                        }
+                    });
+                });
+            }
+
+            input.addEventListener('input', renderOptions);
+            input.addEventListener('focus', renderOptions);
+            input.addEventListener('blur', () => {
+                setTimeout(() => list.classList.remove('open'), 150);
+            });
+        }
+
+        function closeComboboxes() {
+            document.getElementById('form-group-list')?.classList.remove('open');
+            document.getElementById('form-subgroup-list')?.classList.remove('open');
+        }
+
+        function clearTmdbResults() {
+            const results = document.getElementById('tmdb-results');
+            if (results) {
+                results.innerHTML = '';
+                results.classList.add('hidden');
+            }
+        }
+
+        function setTmdbStatus(message, isError = false) {
+            const el = document.getElementById('tmdb-status');
+            if (!el) return;
+            el.textContent = message;
+            el.classList.toggle('text-red-400', isError);
+            el.classList.toggle('text-gray-600', !isError);
+        }
+
+        function getTmdbApiKey() {
+            return window.TMDB_API_KEY && !String(window.TMDB_API_KEY).includes('YOUR_')
+                ? window.TMDB_API_KEY
+                : '';
+        }
+
+        async function tmdbFetch(path) {
+            const key = getTmdbApiKey();
+            if (!key) throw new Error('TMDB API key missing — add TMDB_API_KEY to .env / config.js');
+            const url = `https://api.themoviedb.org/3${path}${path.includes('?') ? '&' : '?'}api_key=${encodeURIComponent(key)}`;
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('TMDB request failed');
+            return response.json();
+        }
+
+        function formatTmdbYear(dateStr) {
+            if (!dateStr) return new Date().getFullYear();
+            const year = parseInt(dateStr.slice(0, 4), 10);
+            return Number.isNaN(year) ? new Date().getFullYear() : year;
+        }
+
+        function renderTmdbResults(results) {
+            const container = document.getElementById('tmdb-results');
+            if (!container) return;
+
+            const items = results.filter(r => r.media_type === 'movie' || r.media_type === 'tv');
+            if (!items.length) {
+                container.innerHTML = '<p class="text-xs text-gray-500 px-2 py-1">No results.</p>';
+                container.classList.remove('hidden');
+                return;
+            }
+
+            container.innerHTML = items.slice(0, 8).map(item => {
+                const title = item.title || item.name || 'Untitled';
+                const year = formatTmdbYear(item.release_date || item.first_air_date);
+                const typeLabel = item.media_type === 'tv' ? 'TV' : 'Film';
+                const poster = item.poster_path
+                    ? `https://image.tmdb.org/t/p/w92${item.poster_path}`
+                    : '';
+                return `
+                    <button type="button" class="tmdb-result" data-tmdb-id="${item.id}" data-tmdb-type="${item.media_type}">
+                        ${poster ? `<img src="${poster}" alt="" class="w-8 h-12 object-cover rounded shrink-0 bg-gray-800">` : '<div class="w-8 h-12 rounded shrink-0 bg-gray-800"></div>'}
+                        <span class="min-w-0 flex-1">
+                            <span class="block text-xs font-bold text-gray-200 truncate">${title.replace(/</g, '&lt;')}</span>
+                            <span class="block text-[10px] text-gray-500 font-mono">${typeLabel} · ${year}</span>
+                        </span>
+                    </button>
+                `;
+            }).join('');
+            container.classList.remove('hidden');
+
+            container.querySelectorAll('.tmdb-result').forEach(btn => {
+                btn.addEventListener('click', () => applyTmdbSelection(btn.dataset.tmdbType, btn.dataset.tmdbId));
+            });
+        }
+
+        async function searchTmdb(query) {
+            if (!query.trim()) {
+                clearTmdbResults();
+                setTmdbStatus('Auto-fills title, year, and runtime. Pick group/subgroup below.');
+                return;
+            }
+
+            if (!getTmdbApiKey()) {
+                setTmdbStatus('Add TMDB_API_KEY to config.js to enable search.', true);
+                return;
+            }
+
+            setTmdbStatus('Searching TMDB…');
+            try {
+                const data = await tmdbFetch(`/search/multi?query=${encodeURIComponent(query.trim())}`);
+                renderTmdbResults(data.results || []);
+                setTmdbStatus(`Showing results for “${query.trim()}”.`);
+            } catch {
+                setTmdbStatus('TMDB search failed. Check your API key.', true);
+                clearTmdbResults();
+            }
+        }
+
+        async function applyTmdbSelection(mediaType, mediaId) {
+            try {
+                setTmdbStatus('Loading details…');
+                if (mediaType === 'movie') {
+                    const movie = await tmdbFetch(`/movie/${mediaId}`);
+                    document.getElementById('form-is-series').value = 'false';
+                    toggleFormSeriesFields();
+                    document.getElementById('form-title').value = movie.title || '';
+                    document.getElementById('form-year').value = formatTmdbYear(movie.release_date);
+                    document.getElementById('form-runtime').value = movie.runtime || 120;
+                } else {
+                    const show = await tmdbFetch(`/tv/${mediaId}`);
+                    document.getElementById('form-is-series').value = 'true';
+                    toggleFormSeriesFields();
+                    document.getElementById('form-series-title').value = show.name || '';
+                    document.getElementById('form-season').value = 1;
+                    document.getElementById('form-episode').value = 1;
+                    document.getElementById('form-ep-title').value = 'Episode 1';
+                    document.getElementById('form-year').value = formatTmdbYear(show.first_air_date);
+                    const runtime = Array.isArray(show.episode_run_time) && show.episode_run_time.length
+                        ? show.episode_run_time[0]
+                        : 45;
+                    document.getElementById('form-runtime').value = runtime;
+                }
+                clearTmdbResults();
+                document.getElementById('tmdb-search').value = '';
+                setTmdbStatus('Metadata filled — set group/subgroup, then save.');
+            } catch {
+                setTmdbStatus('Could not load TMDB details.', true);
+            }
+        }
+
+        function initAddItemForm() {
+            setupCombobox('form-group', 'form-group-list', getExistingGroups);
+            setupCombobox('form-subgroup', 'form-subgroup-list', () => {
+                const group = document.getElementById('form-group')?.value.trim();
+                return getExistingSubgroups(group);
+            });
+
+            const tmdbInput = document.getElementById('tmdb-search');
+            if (tmdbInput && !tmdbInput.dataset.bound) {
+                tmdbInput.dataset.bound = '1';
+                tmdbInput.addEventListener('input', () => {
+                    clearTimeout(tmdbSearchTimer);
+                    tmdbSearchTimer = setTimeout(() => searchTmdb(tmdbInput.value), 350);
+                });
+            }
+
+            if (!getTmdbApiKey()) {
+                setTmdbStatus('Add TMDB_API_KEY to config.js to enable search.', true);
+            }
+        }
+
+        function openModal() {
+            document.getElementById('add-modal').classList.remove('hidden');
+            initAddItemForm();
+        }
+
+        function closeModal() {
+            document.getElementById('add-modal').classList.add('hidden');
+            document.getElementById('item-form').reset();
+            toggleFormSeriesFields();
+            clearTmdbResults();
+            closeComboboxes();
+            if (getTmdbApiKey()) {
+                setTmdbStatus('Auto-fills title, year, and runtime. Pick group/subgroup below.');
+            }
+        }
         function toggleFormSeriesFields() {
             const isSeries = document.getElementById('form-is-series').value === 'true';
             document.getElementById('wrapper-title').style.display = isSeries ? 'none' : 'block';

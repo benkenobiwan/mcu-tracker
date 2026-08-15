@@ -60,6 +60,7 @@ Or open `MCU-Tracker/harvest.html` locally and click **Copy export script** — 
 |----------|--------|
 | `SUPABASE_URL` | `https://YOUR_PROJECT_REF.supabase.co` |
 | `SUPABASE_ANON_KEY` | your anon/publishable key |
+| `TMDB_API_KEY` | your [TMDB v3 API key](https://www.themoviedb.org/settings/api) (optional, for Add Item search) |
 
 3. Deploy — the build generates `config.js` from those variables automatically.
 

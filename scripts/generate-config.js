@@ -34,6 +34,7 @@ const outputPath = path.join(__dirname, '..', 'MCU-Tracker', 'config.js');
 const contents = `// Generated at build time — do not edit manually on deploy targets.
 window.SUPABASE_URL = ${JSON.stringify(url)};
 window.SUPABASE_ANON_KEY = ${JSON.stringify(key)};
+window.TMDB_API_KEY = ${JSON.stringify(process.env.TMDB_API_KEY || '')};
 `;
 
 fs.writeFileSync(outputPath, contents, 'utf8');

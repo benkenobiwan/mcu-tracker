@@ -3,3 +3,4 @@
 // Netlify: set SUPABASE_URL and SUPABASE_ANON_KEY in Site settings → Environment variables.
 window.SUPABASE_URL = 'https://YOUR_PROJECT_REF.supabase.co';
 window.SUPABASE_ANON_KEY = 'YOUR_ANON_OR_PUBLISHABLE_KEY';
+window.TMDB_API_KEY = 'YOUR_TMDB_V3_API_KEY';
