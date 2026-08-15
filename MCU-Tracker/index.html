@@ -131,6 +131,31 @@
             background: rgba(255, 255, 255, 0.05);
             border-color: rgba(107, 114, 128, 0.4);
         }
+        .ep-picker-list {
+            max-height: 14rem;
+            overflow-y: auto;
+        }
+        .season-block + .season-block {
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid rgba(55, 65, 81, 0.5);
+        }
+        .inline-rename-input {
+            min-width: 8rem;
+            max-width: 100%;
+            background: rgba(0, 0, 0, 0.45);
+            border: 1px solid rgba(226, 54, 54, 0.55);
+            border-radius: 0.25rem;
+            padding: 0.125rem 0.375rem;
+            color: inherit;
+            font: inherit;
+            letter-spacing: inherit;
+            text-transform: inherit;
+        }
+        .inline-rename-input:focus {
+            outline: none;
+            border-color: #E23636;
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-[#4A0404] to-[#120101] text-gray-100 min-h-screen font-sans antialiased bg-fixed">
@@ -245,13 +270,29 @@
                     </select>
                 </div>
                 <div id="wrapper-title"><label class="block text-xs font-bold text-gray-400 uppercase mb-1">Title</label><input type="text" id="form-title" class="w-full bg-black/50 border border-gray-700 rounded p-2 text-sm text-gray-200 focus:outline-none focus:border-[#E23636]"></div>
-                <div id="wrapper-series-fields" class="hidden grid grid-cols-3 gap-2">
-                    <div class="col-span-3"><label class="block text-xs font-bold text-gray-400 uppercase mb-1">Series Title</label><input type="text" id="form-series-title" class="w-full bg-black/50 border border-gray-700 rounded p-2 text-sm text-gray-200 focus:outline-none focus:border-[#E23636]"></div>
-                    <div><label class="block text-xs font-bold text-gray-400 uppercase mb-1">Season #</label><input type="number" id="form-season" value="1" class="w-full bg-black/50 border border-gray-700 rounded p-2 text-sm text-gray-200 focus:outline-none focus:border-[#E23636]"></div>
-                    <div><label class="block text-xs font-bold text-gray-400 uppercase mb-1">Episode #</label><input type="number" id="form-episode" value="1" class="w-full bg-black/50 border border-gray-700 rounded p-2 text-sm text-gray-200 focus:outline-none focus:border-[#E23636]"></div>
-                    <div><label class="block text-xs font-bold text-gray-400 uppercase mb-1">Ep Title</label><input type="text" id="form-ep-title" class="w-full bg-black/50 border border-gray-700 rounded p-2 text-sm text-gray-200 focus:outline-none focus:border-[#E23636]"></div>
+                <div id="wrapper-series-fields" class="hidden space-y-3">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Series Title</label>
+                        <input type="text" id="form-series-title" class="w-full bg-black/50 border border-gray-700 rounded p-2 text-sm text-gray-200 focus:outline-none focus:border-[#E23636]">
+                    </div>
+                    <div id="wrapper-episode-picker" class="hidden space-y-2">
+                        <div class="flex items-center justify-between gap-2">
+                            <label class="text-xs font-bold text-gray-400 uppercase">Select Episodes</label>
+                            <div class="flex gap-2 text-[10px] uppercase tracking-wider font-bold">
+                                <button type="button" id="ep-picker-all" class="text-gray-500 hover:text-gray-200 cursor-pointer">All</button>
+                                <button type="button" id="ep-picker-none" class="text-gray-500 hover:text-gray-200 cursor-pointer">None</button>
+                            </div>
+                        </div>
+                        <div id="ep-picker-list" class="ep-picker-list rounded border border-gray-800 bg-black/40 p-2 space-y-2"></div>
+                        <p id="ep-picker-count" class="text-[10px] text-gray-500 font-mono">0 episodes selected</p>
+                    </div>
+                    <div id="wrapper-series-manual" class="grid grid-cols-3 gap-2">
+                        <div><label class="block text-xs font-bold text-gray-400 uppercase mb-1">Season #</label><input type="number" id="form-season" value="1" class="w-full bg-black/50 border border-gray-700 rounded p-2 text-sm text-gray-200 focus:outline-none focus:border-[#E23636]"></div>
+                        <div><label class="block text-xs font-bold text-gray-400 uppercase mb-1">Episode #</label><input type="number" id="form-episode" value="1" class="w-full bg-black/50 border border-gray-700 rounded p-2 text-sm text-gray-200 focus:outline-none focus:border-[#E23636]"></div>
+                        <div><label class="block text-xs font-bold text-gray-400 uppercase mb-1">Ep Title</label><input type="text" id="form-ep-title" class="w-full bg-black/50 border border-gray-700 rounded p-2 text-sm text-gray-200 focus:outline-none focus:border-[#E23636]"></div>
+                    </div>
                 </div>
-                <div class="grid grid-cols-2 gap-4">
+                <div id="wrapper-film-meta" class="grid grid-cols-2 gap-4">
                     <div><label class="block text-xs font-bold text-gray-400 uppercase mb-1">Release Year</label><input type="number" id="form-year" required class="w-full bg-black/50 border border-gray-700 rounded p-2 text-sm text-gray-200 focus:outline-none focus:border-[#E23636]" value="2026"></div>
                     <div><label class="block text-xs font-bold text-gray-400 uppercase mb-1">Runtime (Mins)</label><input type="number" id="form-runtime" required class="w-full bg-black/50 border border-gray-700 rounded p-2 text-sm text-gray-200 focus:outline-none focus:border-[#E23636]" value="120"></div>
                 </div>
@@ -261,6 +302,32 @@
                     <button type="submit" class="bg-[#E23636] hover:bg-red-700 text-white px-4 py-1.5 rounded font-bold uppercase tracking-wider text-xs cursor-pointer">Save Item</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <div id="edit-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-[#1a0a0a] rounded-xl border border-gray-500/40 max-w-lg w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <div class="absolute top-0 left-0 w-full h-1 bg-[#E23636]"></div>
+            <h3 class="text-xl font-bold mb-1 text-gray-100 uppercase tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-gray-200 to-gray-500">Refresh from TMDB</h3>
+            <p id="edit-context" class="text-xs text-gray-500 mb-4 font-mono"></p>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Search TMDB</label>
+                    <input type="search" id="edit-tmdb-search" autocomplete="off" placeholder="Search movies &amp; TV shows…"
+                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-sm text-gray-200 focus:outline-none focus:border-[#E23636]">
+                    <p id="edit-tmdb-status" class="text-[10px] text-gray-600 mt-1">Pick the correct TMDB entry to overwrite metadata.</p>
+                    <div id="edit-tmdb-results" class="hidden mt-2 max-h-44 overflow-y-auto rounded border border-gray-800 bg-black/40 p-1 space-y-1"></div>
+                </div>
+                <div id="edit-preview" class="hidden rounded border border-gray-800 bg-black/40 p-3 space-y-2">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Preview — will overwrite</p>
+                    <div id="edit-preview-body" class="text-xs text-gray-300 space-y-1"></div>
+                </div>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" onclick="closeEditModal()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 px-4 py-1.5 rounded font-bold uppercase tracking-wider text-xs cursor-pointer">Cancel</button>
+                    <button type="button" id="edit-apply-btn" onclick="applyEditUpdate()" disabled
+                        class="bg-[#E23636] hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed text-white px-4 py-1.5 rounded font-bold uppercase tracking-wider text-xs cursor-pointer">Apply Update</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -277,6 +344,8 @@
         const iconChevron = `<svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>`;
         const iconBack = `<svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>`;
         const iconDragHandle = `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="5" r="1.6"/><circle cx="15" cy="5" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="19" r="1.6"/><circle cx="15" cy="19" r="1.6"/></svg>`;
+        const iconEdit = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>`;
+        const iconPlus = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 5v14m-7-7h14"></path></svg>`;
 
         let state = [];
         let openGroups = {};
@@ -468,6 +537,7 @@
             initDragDropListeners();
             initSearchListeners();
             initAddItemForm();
+            initEditModal();
             hideLoading();
         }
 
@@ -672,6 +742,126 @@
         }
 
         function toggleGroup(key) { openGroups[key] = !openGroups[key]; render(); }
+
+        function migrateOpenGroupsOnGroupRename(oldName, newName) {
+            const next = {};
+            Object.keys(openGroups).forEach(key => {
+                if (key === oldName) next[newName] = openGroups[key];
+                else if (key.startsWith(`${oldName}||`)) next[`${newName}||${key.slice(oldName.length + 2)}`] = openGroups[key];
+                else next[key] = openGroups[key];
+            });
+            openGroups = next;
+        }
+
+        function migrateOpenGroupsOnSubgroupRename(groupName, oldName, newName) {
+            const oldKey = `${groupName}||${oldName}`;
+            const newKey = `${groupName}||${newName}`;
+            if (Object.prototype.hasOwnProperty.call(openGroups, oldKey)) {
+                openGroups[newKey] = openGroups[oldKey];
+                delete openGroups[oldKey];
+            }
+        }
+
+        function renameGroup(oldName, newName) {
+            newName = newName.trim();
+            if (!newName || newName === oldName) return false;
+            if (state.some(item => item.group === newName)) {
+                alert('A group with that name already exists.');
+                return false;
+            }
+
+            state.forEach(item => {
+                if (item.group === oldName) item.group = newName;
+            });
+            migrateOpenGroupsOnGroupRename(oldName, newName);
+            saveState();
+            render();
+            return true;
+        }
+
+        function renameSubgroup(groupName, oldName, newName) {
+            newName = newName.trim();
+            if (!newName || newName === oldName) return false;
+            if (state.some(item => item.group === groupName && item.subgroup === newName)) {
+                alert('A subgroup with that name already exists in this group.');
+                return false;
+            }
+
+            state.forEach(item => {
+                if (item.group === groupName && item.subgroup === oldName) item.subgroup = newName;
+            });
+            migrateOpenGroupsOnSubgroupRename(groupName, oldName, newName);
+            saveState();
+            render();
+            return true;
+        }
+
+        function enableInlineRename(titleEl, currentValue, onCommit) {
+            if (!titleEl || titleEl.dataset.editing === '1') return;
+
+            titleEl.dataset.editing = '1';
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = currentValue;
+            input.className = `${titleEl.className} inline-rename-input`.replace(/\btruncate\b/, '');
+
+            const restore = () => {
+                if (input.isConnected) input.replaceWith(titleEl);
+                delete titleEl.dataset.editing;
+            };
+
+            titleEl.replaceWith(input);
+            input.focus();
+            input.select();
+
+            ['mousedown', 'click'].forEach(evt => {
+                input.addEventListener(evt, (e) => e.stopPropagation());
+            });
+
+            const finish = (save) => {
+                const newValue = input.value.trim();
+                if (!save || !newValue || newValue === currentValue) {
+                    restore();
+                    return;
+                }
+                if (onCommit(newValue) === false) {
+                    input.focus();
+                    input.select();
+                }
+            };
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    finish(true);
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    finish(false);
+                }
+            });
+            input.addEventListener('blur', () => finish(true));
+        }
+
+        function wireHeaderToggle(headerEl, toggleKey) {
+            headerEl?.querySelectorAll('.header-toggle').forEach(el => {
+                el.addEventListener('click', () => toggleGroup(toggleKey));
+            });
+        }
+
+        function wireHeaderRename(headerEl, currentName, onRename) {
+            headerEl?.querySelector('.rename-header-btn')?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const titleEl = headerEl.querySelector('.rename-target');
+                enableInlineRename(titleEl, currentName, onRename);
+            });
+        }
+
+        function wireSubgroupAddBtn(headerEl, groupName, subgroupName) {
+            headerEl?.querySelector('.add-subgroup-btn')?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openModal(groupName, subgroupName);
+            });
+        }
 
         function normalizeSearch(query) {
             return query.trim().toLowerCase();
@@ -1066,17 +1256,24 @@
                 gDiv.dataset.groupKey = gKey;
                 
                 gDiv.innerHTML = `
-                    <div onclick="toggleGroup('${gKey.replace(/'/g, "\\'")}')" data-drop-zone="group" data-drop-group="${gName.replace(/"/g, '&quot;')}" data-group-key="${gKey.replace(/"/g, '&quot;')}" class="px-3 py-2.5 flex flex-wrap justify-between items-center cursor-pointer select-none hover:bg-black/40 transition">
-                        <div class="flex items-center gap-2 font-extrabold text-base tracking-wide ${isGComplete ? 'text-white' : 'text-transparent bg-clip-text bg-gradient-to-r from-gray-200 to-gray-400'}">
+                    <div data-drop-zone="group" data-drop-group="${gName.replace(/"/g, '&quot;')}" data-group-key="${gKey.replace(/"/g, '&quot;')}" class="px-3 py-2.5 flex flex-wrap justify-between items-center select-none hover:bg-black/40 transition gap-2">
+                        <div class="header-toggle flex items-center gap-2 font-extrabold text-base tracking-wide min-w-0 flex-1 cursor-pointer ${isGComplete ? 'text-white' : 'text-transparent bg-clip-text bg-gradient-to-r from-gray-200 to-gray-400'}">
                             <span class="text-gray-400 transform transition-transform duration-300 ${isGOpen ? 'rotate-90' : ''}">${iconChevron}</span>
-                            ${gName}
+                            <span class="rename-target truncate">${escapeHtml(gName)}</span>
                         </div>
-                        ${renderProgressBar(gWatched, gTotal)}
+                        <div class="flex items-center gap-2 flex-shrink-0">
+                            <button type="button" class="rename-header-btn text-gray-600 hover:text-gray-200 transition cursor-pointer" title="Rename group">${iconEdit}</button>
+                            <div class="header-toggle cursor-pointer">${renderProgressBar(gWatched, gTotal)}</div>
+                        </div>
                     </div>
                     <div class="collapsible-content bg-black/40 border-t border-gray-700/30">
                         <div class="p-2 space-y-0 flex flex-col"></div>
                     </div>
                 `;
+
+                const groupHeaderEl = gDiv.querySelector('[data-drop-zone="group"]');
+                wireHeaderToggle(groupHeaderEl, gKey);
+                wireHeaderRename(groupHeaderEl, gName, (newName) => renameGroup(gName, newName));
 
                 const subContainer = gDiv.querySelector('.collapsible-content > div');
                 let groupHasSections = false;
@@ -1107,17 +1304,26 @@
                     sDiv.className = `border-b border-gray-800/80 last:border-b-0 overflow-visible ${isSOpen ? '' : 'collapsed'}`;
                     sDiv.dataset.groupKey = sKey;
                     sDiv.innerHTML = `
-                        <div onclick="toggleGroup('${sKey.replace(/'/g, "\\'")}')" data-drop-zone="subgroup" data-drop-group="${gName.replace(/"/g, '&quot;')}" data-drop-subgroup="${sName.replace(/"/g, '&quot;')}" data-group-key="${sKey.replace(/"/g, '&quot;')}" class="${sHeaderStyle} px-3 py-2 flex flex-wrap justify-between items-center cursor-pointer select-none hover:brightness-125 transition">
-                            <div class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider">
+                        <div data-drop-zone="subgroup" data-drop-group="${gName.replace(/"/g, '&quot;')}" data-drop-subgroup="${sName.replace(/"/g, '&quot;')}" data-group-key="${sKey.replace(/"/g, '&quot;')}" class="${sHeaderStyle} px-3 py-2 flex flex-wrap justify-between items-center select-none hover:brightness-125 transition gap-2">
+                            <div class="header-toggle flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider min-w-0 flex-1 cursor-pointer">
                                 <span class="text-gray-500 transform transition-transform duration-300 ${isSOpen ? 'rotate-90' : ''}">${iconChevron}</span>
-                                ${sName}
+                                <span class="rename-target truncate">${escapeHtml(sName)}</span>
                             </div>
-                            ${renderProgressBar(sWatched, sTotal)}
+                            <div class="flex items-center gap-2 flex-shrink-0">
+                                <button type="button" class="add-subgroup-btn text-gray-600 hover:text-[#E23636] transition cursor-pointer" title="Add item to this section">${iconPlus}</button>
+                                <button type="button" class="rename-header-btn text-gray-600 hover:text-gray-200 transition cursor-pointer" title="Rename subgroup">${iconEdit}</button>
+                                <div class="header-toggle cursor-pointer">${renderProgressBar(sWatched, sTotal)}</div>
+                            </div>
                         </div>
                         <div class="collapsible-content bg-[#0d0d0d]/80">
                             <div class="p-1.5 space-y-1 timeline-items"></div>
                         </div>
                     `;
+
+                    const subgroupHeaderEl = sDiv.querySelector('[data-drop-zone="subgroup"]');
+                    wireHeaderToggle(subgroupHeaderEl, sKey);
+                    wireHeaderRename(subgroupHeaderEl, sName, (newName) => renameSubgroup(gName, sName, newName));
+                    wireSubgroupAddBtn(subgroupHeaderEl, gName, sName);
 
                     const itemContainer = sDiv.querySelector('.collapsible-content > div');
                     const blocks = getRenderableBlocks(allSectionItems, searchFilter ? searchFilter.visibleItemIds : null);
@@ -1176,6 +1382,8 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-2.5 flex-shrink-0">
+                    <button type="button" class="edit-item-btn text-gray-600 hover:text-gray-200 transition cursor-pointer" title="Refresh from TMDB">${iconEdit}</button>
+                    <div class="w-px h-3 bg-gray-700/50"></div>
                     <button onclick="updateStatus('${item.id}', 'watched', event)" class="transition duration-200 cursor-pointer ${getBtnStyles(item.status, 'watched')}" title="Mark Watched">${iconCheck}</button>
                     <div class="w-px h-3 bg-gray-700/50"></div>
                     <button onclick="updateStatus('${item.id}', 'skipped', event)" class="transition duration-200 cursor-pointer ${getBtnStyles(item.status, 'skipped')}" title="Skip Entirely">${iconSkipEntirely}</button>
@@ -1183,6 +1391,10 @@
                     <button onclick="updateStatus('${item.id}', 'skipped_rewatch', event)" class="transition duration-200 cursor-pointer ${getBtnStyles(item.status, 'skipped_rewatch')}" title="Skip Rewatching">${iconSkipRewatch}</button>
                 </div>
             `;
+            row.querySelector('.edit-item-btn')?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openEditMovieModal(item.id);
+            });
             return row;
         }
 
@@ -1223,12 +1435,15 @@
 
             block.className = `rounded ${containerStyle} ${isSeriesOpen ? '' : 'collapsed'} transition-all`;
             block.innerHTML = `
-                <div onclick="toggleGroup('${seriesKey}')" class="flex flex-wrap justify-between items-center px-2 py-1.5 cursor-pointer hover:bg-black/20 transition ${isSeriesOpen ? 'border-b border-gray-700/30' : ''}">
-                    <div class="flex items-center gap-1.5 text-xs font-bold ${headerTextColor} uppercase tracking-widest">
+                <div class="flex flex-wrap justify-between items-center px-2 py-1.5 hover:bg-black/20 transition ${isSeriesOpen ? 'border-b border-gray-700/30' : ''}">
+                    <div onclick="toggleGroup('${seriesKey}')" class="flex items-center gap-1.5 text-xs font-bold ${headerTextColor} uppercase tracking-widest cursor-pointer min-w-0 flex-1">
                         <span class="text-gray-500 transform transition-transform duration-300 ${isSeriesOpen ? 'rotate-90' : ''}">${iconChevron}</span>
-                        ${seriesTitle} (Season ${seasonNum})
+                        <span class="truncate">${escapeHtml(seriesTitle)} (Season ${seasonNum})</span>
                     </div>
-                    ${renderProgressBar(sWatched, sTotal)}
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        <button type="button" class="edit-season-btn text-gray-600 hover:text-gray-200 transition cursor-pointer" title="Refresh season from TMDB">${iconEdit}</button>
+                        <div onclick="toggleGroup('${seriesKey}')" class="cursor-pointer">${renderProgressBar(sWatched, sTotal)}</div>
+                    </div>
                 </div>
                 
                 <div class="collapsible-content bg-black/30">
@@ -1259,6 +1474,10 @@
                     </div>
                 </div>
             `;
+            block.querySelector('.edit-season-btn')?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openEditSeasonModal(seriesTitle, seasonNum);
+            });
             return block;
         }
 
@@ -1281,6 +1500,26 @@
 
         // Add Modal logic mapping
         let tmdbSearchTimer = null;
+        let tmdbTvSelection = null;
+
+        // Edit Modal logic
+        let editContext = null;
+        let editTmdbPreview = null;
+        let editTmdbSearchTimer = null;
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function clearTvSelection() {
+            tmdbTvSelection = null;
+            document.getElementById('ep-picker-list').innerHTML = '';
+            document.getElementById('ep-picker-count').textContent = '0 episodes selected';
+        }
 
         function getExistingGroups() {
             const groups = new Set();
@@ -1442,6 +1681,7 @@
         async function applyTmdbSelection(mediaType, mediaId) {
             try {
                 setTmdbStatus('Loading details…');
+                clearTvSelection();
                 if (mediaType === 'movie') {
                     const movie = await tmdbFetch(`/movie/${mediaId}`);
                     document.getElementById('form-is-series').value = 'false';
@@ -1450,28 +1690,162 @@
                     document.getElementById('form-year').value = formatTmdbYear(movie.release_date);
                     document.getElementById('form-runtime').value = movie.runtime || 120;
                 } else {
-                    const show = await tmdbFetch(`/tv/${mediaId}`);
-                    document.getElementById('form-is-series').value = 'true';
-                    toggleFormSeriesFields();
-                    document.getElementById('form-series-title').value = show.name || '';
-                    document.getElementById('form-season').value = 1;
-                    document.getElementById('form-episode').value = 1;
-                    document.getElementById('form-ep-title').value = 'Episode 1';
-                    document.getElementById('form-year').value = formatTmdbYear(show.first_air_date);
-                    const runtime = Array.isArray(show.episode_run_time) && show.episode_run_time.length
-                        ? show.episode_run_time[0]
-                        : 45;
-                    document.getElementById('form-runtime').value = runtime;
+                    await loadTvEpisodePicker(mediaId);
                 }
                 clearTmdbResults();
                 document.getElementById('tmdb-search').value = '';
-                setTmdbStatus('Metadata filled — set group/subgroup, then save.');
+                setTmdbStatus(tmdbTvSelection
+                    ? 'Select episodes to add — set group/subgroup, then save.'
+                    : 'Metadata filled — set group/subgroup, then save.');
             } catch {
                 setTmdbStatus('Could not load TMDB details.', true);
             }
         }
 
+        async function loadTvEpisodePicker(showId) {
+            const show = await tmdbFetch(`/tv/${showId}`);
+            const seasonCount = show.number_of_seasons || 0;
+            const fallbackRuntime = Array.isArray(show.episode_run_time) && show.episode_run_time.length
+                ? show.episode_run_time[0]
+                : 45;
+
+            setTmdbStatus(`Loading ${seasonCount} season(s)…`);
+
+            const seasonRequests = [];
+            for (let seasonNumber = 1; seasonNumber <= seasonCount; seasonNumber++) {
+                seasonRequests.push(
+                    tmdbFetch(`/tv/${showId}/season/${seasonNumber}`)
+                        .then(data => ({ seasonNumber, data }))
+                        .catch(() => null)
+                );
+            }
+
+            const seasonResults = await Promise.all(seasonRequests);
+            const seasons = seasonResults
+                .filter(Boolean)
+                .map(({ seasonNumber, data }) => ({
+                    seasonNumber,
+                    episodes: (data.episodes || [])
+                        .filter(ep => ep.episode_number > 0)
+                        .map(ep => ({
+                            seasonNumber,
+                            episodeNumber: ep.episode_number,
+                            title: ep.name || `Episode ${ep.episode_number}`,
+                            runtime: ep.runtime || fallbackRuntime,
+                            year: formatTmdbYear(ep.air_date || show.first_air_date)
+                        }))
+                }))
+                .filter(season => season.episodes.length > 0);
+
+            tmdbTvSelection = {
+                showId,
+                seriesTitle: show.name || '',
+                seasons
+            };
+
+            document.getElementById('form-is-series').value = 'true';
+            document.getElementById('form-series-title').value = tmdbTvSelection.seriesTitle;
+            toggleFormSeriesFields();
+            renderEpisodePicker();
+            setTmdbStatus(`Loaded ${seasons.reduce((n, s) => n + s.episodes.length, 0)} episodes — select what to add.`);
+        }
+
+        function findPickerEpisode(seasonNumber, episodeNumber) {
+            if (!tmdbTvSelection) return null;
+            const season = tmdbTvSelection.seasons.find(s => s.seasonNumber === seasonNumber);
+            return season?.episodes.find(ep => ep.episodeNumber === episodeNumber) || null;
+        }
+
+        function updateSeasonCheckboxState(seasonNumber) {
+            const episodes = document.querySelectorAll(`.ep-check[data-season="${seasonNumber}"]`);
+            const seasonCheck = document.querySelector(`.season-check[data-season="${seasonNumber}"]`);
+            if (!seasonCheck || !episodes.length) return;
+
+            const checkedCount = [...episodes].filter(ep => ep.checked).length;
+            seasonCheck.checked = checkedCount === episodes.length;
+            seasonCheck.indeterminate = checkedCount > 0 && checkedCount < episodes.length;
+        }
+
+        function updateEpisodePickerCount() {
+            const count = document.querySelectorAll('.ep-check:checked').length;
+            document.getElementById('ep-picker-count').textContent =
+                `${count} episode${count === 1 ? '' : 's'} selected`;
+        }
+
+        function renderEpisodePicker() {
+            const list = document.getElementById('ep-picker-list');
+            if (!list || !tmdbTvSelection) return;
+
+            list.innerHTML = tmdbTvSelection.seasons.map(season => `
+                <div class="season-block">
+                    <label class="flex items-center gap-2 text-xs font-bold text-gray-300 uppercase tracking-wider cursor-pointer">
+                        <input type="checkbox" class="season-check accent-[#E23636]" data-season="${season.seasonNumber}">
+                        Season ${season.seasonNumber}
+                    </label>
+                    <div class="mt-1.5 ml-5 space-y-1">
+                        ${season.episodes.map(ep => `
+                            <label class="flex items-start gap-2 text-[11px] text-gray-400 hover:text-gray-200 cursor-pointer leading-snug">
+                                <input type="checkbox" class="ep-check accent-[#E23636] mt-0.5 shrink-0"
+                                    data-season="${ep.seasonNumber}" data-episode="${ep.episodeNumber}">
+                                <span>
+                                    <span class="font-mono text-gray-500">E${ep.episodeNumber}</span>
+                                    <span class="text-gray-200 font-semibold"> ${escapeHtml(ep.title)}</span>
+                                    <span class="text-gray-600 font-mono"> · ${ep.year} · ${formatMins(ep.runtime)}</span>
+                                </span>
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+
+            list.querySelectorAll('.season-check').forEach(seasonCheck => {
+                seasonCheck.addEventListener('change', () => {
+                    const seasonNumber = seasonCheck.dataset.season;
+                    list.querySelectorAll(`.ep-check[data-season="${seasonNumber}"]`).forEach(epCheck => {
+                        epCheck.checked = seasonCheck.checked;
+                    });
+                    updateEpisodePickerCount();
+                });
+            });
+
+            list.querySelectorAll('.ep-check').forEach(epCheck => {
+                epCheck.addEventListener('change', () => {
+                    updateSeasonCheckboxState(epCheck.dataset.season);
+                    updateEpisodePickerCount();
+                });
+            });
+
+            updateEpisodePickerCount();
+        }
+
+        function initEpisodePickerControls() {
+            const allBtn = document.getElementById('ep-picker-all');
+            const noneBtn = document.getElementById('ep-picker-none');
+            if (!allBtn || allBtn.dataset.bound) return;
+            allBtn.dataset.bound = '1';
+            noneBtn.dataset.bound = '1';
+
+            allBtn.addEventListener('click', () => {
+                const list = document.getElementById('ep-picker-list');
+                list?.querySelectorAll('.season-check, .ep-check').forEach(cb => {
+                    cb.checked = true;
+                    cb.indeterminate = false;
+                });
+                updateEpisodePickerCount();
+            });
+
+            noneBtn.addEventListener('click', () => {
+                const list = document.getElementById('ep-picker-list');
+                list?.querySelectorAll('.season-check, .ep-check').forEach(cb => {
+                    cb.checked = false;
+                    cb.indeterminate = false;
+                });
+                updateEpisodePickerCount();
+            });
+        }
+
         function initAddItemForm() {
+            initEpisodePickerControls();
             setupCombobox('form-group', 'form-group-list', getExistingGroups);
             setupCombobox('form-subgroup', 'form-subgroup-list', () => {
                 const group = document.getElementById('form-group')?.value.trim();
@@ -1492,14 +1866,348 @@
             }
         }
 
-        function openModal() {
+        function setEditTmdbStatus(message, isError = false) {
+            const el = document.getElementById('edit-tmdb-status');
+            if (!el) return;
+            el.textContent = message;
+            el.classList.toggle('text-red-400', isError);
+            el.classList.toggle('text-gray-600', !isError);
+        }
+
+        function clearEditTmdbResults() {
+            const results = document.getElementById('edit-tmdb-results');
+            if (results) {
+                results.innerHTML = '';
+                results.classList.add('hidden');
+            }
+        }
+
+        function clearEditPreview() {
+            editTmdbPreview = null;
+            document.getElementById('edit-preview')?.classList.add('hidden');
+            document.getElementById('edit-preview-body').innerHTML = '';
+            const applyBtn = document.getElementById('edit-apply-btn');
+            if (applyBtn) applyBtn.disabled = true;
+        }
+
+        function renderEditTmdbResults(results) {
+            const container = document.getElementById('edit-tmdb-results');
+            if (!container) return;
+
+            const expectedType = editContext?.type === 'movie' ? 'movie' : 'tv';
+            const items = (results || []).filter(r => r.media_type === expectedType);
+            if (!items.length) {
+                const label = expectedType === 'movie' ? 'films' : 'TV shows';
+                container.innerHTML = `<p class="text-xs text-gray-500 px-2 py-1">No ${label} found.</p>`;
+                container.classList.remove('hidden');
+                return;
+            }
+
+            container.innerHTML = items.slice(0, 8).map(item => {
+                const title = item.title || item.name || 'Untitled';
+                const year = formatTmdbYear(item.release_date || item.first_air_date);
+                const typeLabel = item.media_type === 'tv' ? 'TV' : 'Film';
+                const poster = item.poster_path
+                    ? `https://image.tmdb.org/t/p/w92${item.poster_path}`
+                    : '';
+                return `
+                    <button type="button" class="tmdb-result" data-tmdb-id="${item.id}" data-tmdb-type="${item.media_type}">
+                        ${poster ? `<img src="${poster}" alt="" class="w-8 h-12 object-cover rounded shrink-0 bg-gray-800">` : '<div class="w-8 h-12 rounded shrink-0 bg-gray-800"></div>'}
+                        <span class="min-w-0 flex-1">
+                            <span class="block text-xs font-bold text-gray-200 truncate">${escapeHtml(title)}</span>
+                            <span class="block text-[10px] text-gray-500 font-mono">${typeLabel} · ${year}</span>
+                        </span>
+                    </button>
+                `;
+            }).join('');
+            container.classList.remove('hidden');
+
+            container.querySelectorAll('.tmdb-result').forEach(btn => {
+                btn.addEventListener('click', () => applyEditTmdbSelection(btn.dataset.tmdbType, btn.dataset.tmdbId));
+            });
+        }
+
+        async function searchEditTmdb(query) {
+            if (!query.trim()) {
+                clearEditTmdbResults();
+                clearEditPreview();
+                setEditTmdbStatus('Pick the correct TMDB entry to overwrite metadata.');
+                return;
+            }
+
+            if (!getTmdbApiKey()) {
+                setEditTmdbStatus('Add TMDB_API_KEY to config.js to enable search.', true);
+                return;
+            }
+
+            setEditTmdbStatus('Searching TMDB…');
+            try {
+                const data = await tmdbFetch(`/search/multi?query=${encodeURIComponent(query.trim())}`);
+                renderEditTmdbResults(data.results || []);
+                setEditTmdbStatus(`Showing results for “${query.trim()}”.`);
+            } catch {
+                setEditTmdbStatus('TMDB search failed. Check your API key.', true);
+                clearEditTmdbResults();
+            }
+        }
+
+        function renderEditPreview() {
+            const preview = document.getElementById('edit-preview');
+            const body = document.getElementById('edit-preview-body');
+            const applyBtn = document.getElementById('edit-apply-btn');
+            if (!preview || !body || !editTmdbPreview) return;
+
+            if (editTmdbPreview.type === 'movie') {
+                body.innerHTML = `
+                    <p class="font-bold text-gray-100">${escapeHtml(editTmdbPreview.title)}</p>
+                    <p class="text-gray-500 font-mono text-[11px]">${editTmdbPreview.year} · ${formatMins(editTmdbPreview.runtime)}</p>
+                `;
+            } else {
+                body.innerHTML = `
+                    <p class="font-bold text-gray-100">${escapeHtml(editTmdbPreview.seriesTitle)} · Season ${editTmdbPreview.seasonNumber}</p>
+                    <div class="max-h-40 overflow-y-auto space-y-1 pt-1">
+                        ${editTmdbPreview.episodes.map(ep => `
+                            <p class="text-[11px] text-gray-400">
+                                <span class="font-mono text-gray-500">E${ep.episodeNumber}</span>
+                                <span class="text-gray-200 font-semibold"> ${escapeHtml(ep.title)}</span>
+                                <span class="text-gray-600 font-mono"> · ${ep.year} · ${formatMins(ep.runtime)}</span>
+                            </p>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            preview.classList.remove('hidden');
+            if (applyBtn) applyBtn.disabled = false;
+        }
+
+        async function applyEditTmdbSelection(mediaType, mediaId) {
+            if (!editContext) return;
+
+            try {
+                setEditTmdbStatus('Loading TMDB details…');
+                clearEditPreview();
+
+                if (editContext.type === 'movie') {
+                    if (mediaType !== 'movie') {
+                        setEditTmdbStatus('Pick a film result for this item.', true);
+                        return;
+                    }
+                    const movie = await tmdbFetch(`/movie/${mediaId}`);
+                    editTmdbPreview = {
+                        type: 'movie',
+                        showId: mediaId,
+                        title: movie.title || '',
+                        year: formatTmdbYear(movie.release_date),
+                        runtime: movie.runtime || 120
+                    };
+                } else {
+                    if (mediaType !== 'tv') {
+                        setEditTmdbStatus('Pick a TV show result for this season.', true);
+                        return;
+                    }
+                    await loadEditSeasonPreview(mediaId, editContext.seasonNumber);
+                }
+
+                clearEditTmdbResults();
+                document.getElementById('edit-tmdb-search').value = '';
+                renderEditPreview();
+                setEditTmdbStatus('Review the preview, then apply to overwrite metadata. Watch progress is preserved.');
+            } catch {
+                setEditTmdbStatus('Could not load TMDB details.', true);
+            }
+        }
+
+        async function loadEditSeasonPreview(showId, seasonNumber) {
+            const show = await tmdbFetch(`/tv/${showId}`);
+            const seasonData = await tmdbFetch(`/tv/${showId}/season/${seasonNumber}`);
+            const fallbackRuntime = Array.isArray(show.episode_run_time) && show.episode_run_time.length
+                ? show.episode_run_time[0]
+                : 45;
+
+            const episodes = (seasonData.episodes || [])
+                .filter(ep => ep.episode_number > 0)
+                .map(ep => ({
+                    episodeNumber: ep.episode_number,
+                    title: ep.name || `Episode ${ep.episode_number}`,
+                    runtime: ep.runtime || fallbackRuntime,
+                    year: formatTmdbYear(ep.air_date || show.first_air_date)
+                }));
+
+            if (!episodes.length) {
+                throw new Error('No episodes found for this season on TMDB.');
+            }
+
+            editTmdbPreview = {
+                type: 'season',
+                showId,
+                seriesTitle: show.name || '',
+                seasonNumber,
+                episodes
+            };
+        }
+
+        function initEditModal() {
+            const input = document.getElementById('edit-tmdb-search');
+            if (input && !input.dataset.bound) {
+                input.dataset.bound = '1';
+                input.addEventListener('input', () => {
+                    clearTimeout(editTmdbSearchTimer);
+                    editTmdbSearchTimer = setTimeout(() => searchEditTmdb(input.value), 350);
+                });
+            }
+        }
+
+        function openEditMovieModal(itemId) {
+            const item = state.find(i => i.id === itemId);
+            if (!item || item.isSeries) return;
+
+            editContext = { type: 'movie', itemId };
+            clearEditPreview();
+            clearEditTmdbResults();
+            initEditModal();
+
+            document.getElementById('edit-context').textContent =
+                `Editing film: ${item.title} (${item.year}) · ${formatMins(item.runtime)}`;
+            document.getElementById('edit-tmdb-search').value = item.title;
+            document.getElementById('edit-modal').classList.remove('hidden');
+
+            if (getTmdbApiKey()) {
+                setEditTmdbStatus('Search TMDB and pick the matching film.');
+                searchEditTmdb(item.title);
+            } else {
+                setEditTmdbStatus('Add TMDB_API_KEY to config.js to enable search.', true);
+            }
+        }
+
+        function openEditSeasonModal(seriesTitle, seasonNumber) {
+            const episodes = state.filter(i =>
+                i.isSeries && i.seriesTitle === seriesTitle && i.seasonNumber === seasonNumber
+            );
+            if (!episodes.length) return;
+
+            editContext = { type: 'season', seriesTitle, seasonNumber };
+            clearEditPreview();
+            clearEditTmdbResults();
+            initEditModal();
+
+            document.getElementById('edit-context').textContent =
+                `Refreshing season: ${seriesTitle} · Season ${seasonNumber} (${episodes.length} episode${episodes.length === 1 ? '' : 's'})`;
+            document.getElementById('edit-tmdb-search').value = seriesTitle;
+            document.getElementById('edit-modal').classList.remove('hidden');
+
+            if (getTmdbApiKey()) {
+                setEditTmdbStatus('Search TMDB and pick the show — the whole season will be overwritten.');
+                searchEditTmdb(seriesTitle);
+            } else {
+                setEditTmdbStatus('Add TMDB_API_KEY to config.js to enable search.', true);
+            }
+        }
+
+        function closeEditModal() {
+            document.getElementById('edit-modal').classList.add('hidden');
+            editContext = null;
+            clearEditPreview();
+            clearEditTmdbResults();
+            document.getElementById('edit-tmdb-search').value = '';
+            setEditTmdbStatus('Pick the correct TMDB entry to overwrite metadata.');
+        }
+
+        function applyEditUpdate() {
+            if (!editContext || !editTmdbPreview) return;
+
+            if (editContext.type === 'movie') {
+                const item = state.find(i => i.id === editContext.itemId);
+                if (!item) return;
+
+                item.title = editTmdbPreview.title;
+                item.year = editTmdbPreview.year;
+                item.runtime = editTmdbPreview.runtime;
+            } else {
+                const { seriesTitle, seasonNumber } = editContext;
+                const preview = editTmdbPreview;
+                const seasonItems = state.filter(i =>
+                    i.isSeries && i.seriesTitle === seriesTitle && i.seasonNumber === seasonNumber
+                );
+                const template = seasonItems[0];
+                if (!template) return;
+
+                const tmdbEpisodeNumbers = new Set(preview.episodes.map(ep => ep.episodeNumber));
+
+                for (let i = state.length - 1; i >= 0; i--) {
+                    const item = state[i];
+                    if (
+                        item.isSeries &&
+                        item.seriesTitle === seriesTitle &&
+                        item.seasonNumber === seasonNumber &&
+                        !tmdbEpisodeNumbers.has(item.episodeNumber)
+                    ) {
+                        state.splice(i, 1);
+                    }
+                }
+
+                preview.episodes.forEach(ep => {
+                    const existing = state.find(i =>
+                        i.isSeries &&
+                        i.seriesTitle === seriesTitle &&
+                        i.seasonNumber === seasonNumber &&
+                        i.episodeNumber === ep.episodeNumber
+                    );
+
+                    if (existing) {
+                        existing.seriesTitle = preview.seriesTitle;
+                        existing.title = ep.title;
+                        existing.year = ep.year;
+                        existing.runtime = ep.runtime;
+                    } else {
+                        state.push({
+                            id: `tmdb_${preview.showId}_s${seasonNumber}_e${ep.episodeNumber}_${Date.now()}_${ep.episodeNumber}`,
+                            group: template.group,
+                            subgroup: template.subgroup,
+                            note: template.note || '',
+                            year: ep.year,
+                            runtime: ep.runtime,
+                            status: 'unwatched',
+                            watchDate: null,
+                            isSeries: true,
+                            seriesTitle: preview.seriesTitle,
+                            seasonNumber,
+                            episodeNumber: ep.episodeNumber,
+                            title: ep.title
+                        });
+                    }
+                });
+            }
+
+            saveState();
+            closeEditModal();
+            render();
+        }
+
+        function openModal(groupName = '', subgroupName = '') {
+            document.getElementById('item-form').reset();
+            clearTvSelection();
+            toggleFormSeriesFields();
+            clearTmdbResults();
+            closeComboboxes();
+
+            if (groupName) document.getElementById('form-group').value = groupName;
+            if (subgroupName) document.getElementById('form-subgroup').value = subgroupName;
+
             document.getElementById('add-modal').classList.remove('hidden');
             initAddItemForm();
+
+            if (getTmdbApiKey()) {
+                setTmdbStatus('Auto-fills title, year, and runtime. Pick group/subgroup below.');
+            }
+
+            document.getElementById('tmdb-search')?.focus();
         }
 
         function closeModal() {
             document.getElementById('add-modal').classList.add('hidden');
             document.getElementById('item-form').reset();
+            clearTvSelection();
             toggleFormSeriesFields();
             clearTmdbResults();
             closeComboboxes();
@@ -1507,21 +2215,78 @@
                 setTmdbStatus('Auto-fills title, year, and runtime. Pick group/subgroup below.');
             }
         }
+
         function toggleFormSeriesFields() {
             const isSeries = document.getElementById('form-is-series').value === 'true';
+            const hasPicker = isSeries && !!tmdbTvSelection;
+
             document.getElementById('wrapper-title').style.display = isSeries ? 'none' : 'block';
-            document.getElementById('wrapper-series-fields').style.display = isSeries ? 'grid' : 'none';
+            document.getElementById('wrapper-series-fields').classList.toggle('hidden', !isSeries);
+            document.getElementById('wrapper-episode-picker')?.classList.toggle('hidden', !hasPicker);
+            document.getElementById('wrapper-series-manual')?.classList.toggle('hidden', !isSeries || hasPicker);
+            document.getElementById('wrapper-film-meta')?.classList.toggle('hidden', isSeries && hasPicker);
+
+            document.getElementById('form-year').required = !(isSeries && hasPicker);
+            document.getElementById('form-runtime').required = !(isSeries && hasPicker);
+
+            if (!isSeries) {
+                clearTvSelection();
+            }
         }
+
         function saveCustomItem(e) {
             e.preventDefault();
             const isSeries = document.getElementById('form-is-series').value === 'true';
+            const group = document.getElementById('form-group').value.trim();
+            const subgroup = document.getElementById('form-subgroup').value.trim();
+            const note = document.getElementById('form-note').value.trim();
+
+            if (isSeries && tmdbTvSelection) {
+                const selected = [...document.querySelectorAll('.ep-check:checked')];
+                if (!selected.length) {
+                    alert('Select at least one episode to add.');
+                    return;
+                }
+
+                const seriesTitle = document.getElementById('form-series-title').value.trim() || tmdbTvSelection.seriesTitle;
+                const batchId = Date.now();
+
+                selected.forEach((checkbox, index) => {
+                    const seasonNumber = parseInt(checkbox.dataset.season, 10);
+                    const episodeNumber = parseInt(checkbox.dataset.episode, 10);
+                    const episode = findPickerEpisode(seasonNumber, episodeNumber);
+                    if (!episode) return;
+
+                    state.push({
+                        id: `tmdb_${tmdbTvSelection.showId}_s${seasonNumber}_e${episodeNumber}_${batchId}_${index}`,
+                        group,
+                        subgroup,
+                        note,
+                        year: episode.year,
+                        runtime: episode.runtime,
+                        status: 'unwatched',
+                        watchDate: null,
+                        isSeries: true,
+                        seriesTitle,
+                        seasonNumber,
+                        episodeNumber,
+                        title: episode.title
+                    });
+                });
+
+                saveState();
+                closeModal();
+                render();
+                return;
+            }
+
             const newItem = {
                 id: 'custom_' + Date.now(),
-                group: document.getElementById('form-group').value.trim(),
-                subgroup: document.getElementById('form-subgroup').value.trim(),
+                group,
+                subgroup,
                 year: parseInt(document.getElementById('form-year').value),
                 runtime: parseInt(document.getElementById('form-runtime').value),
-                note: document.getElementById('form-note').value.trim(),
+                note,
                 status: 'unwatched',
                 watchDate: null,
                 isSeries: isSeries
@@ -1531,8 +2296,10 @@
                 newItem.seasonNumber = parseInt(document.getElementById('form-season').value) || 1;
                 newItem.episodeNumber = parseInt(document.getElementById('form-episode').value) || 1;
                 newItem.title = document.getElementById('form-ep-title').value.trim() || `Episode ${newItem.episodeNumber}`;
-            } else newItem.title = document.getElementById('form-title').value.trim() || "Untitled Item";
-            
+            } else {
+                newItem.title = document.getElementById('form-title').value.trim() || "Untitled Item";
+            }
+
             state.push(newItem);
             saveState();
             closeModal();
